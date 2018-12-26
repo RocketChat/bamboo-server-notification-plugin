@@ -1,1 +1,1 @@
-[@ww.textfield labelKey="server.webhookUrl" name="webhookUrl" value="${webhookUrl!}" required='true'/]
+[@ww.textfield labelKey="server.webhookUrl" name="${inputName!}" value="${webhookUrl!}" required='true'/]

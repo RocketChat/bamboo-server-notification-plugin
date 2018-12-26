@@ -8,10 +8,10 @@
     </plugin-info>
 
     <!-- internationalize your plugin -->
-    <resource type="i18n" name="Server Language Pack" location="english"/>
+    <resource type="i18n" name="Rocket.Chat Language Pack" location="english"/>
 
-    <notificationRecipient key="recipient.server" name="Server Recipient" class="de.tum.in.www1.bamboo.server.ServerNotificationRecipient" weight="10">
-        <description>Server</description>
+    <notificationRecipient key="recipient.rocket.chat" name="Rocket.Chat Recipient" class="chat.rocket.bamboo.server.ServerNotificationRecipient" weight="30">
+        <description>Rocket.Chat</description>
         <resource type="freemarker" name="edit" location="serverEditNotification.ftl"/>
         <resource type="freemarker" name="view" location="serverViewNotification.ftl"/>
     </notificationRecipient>

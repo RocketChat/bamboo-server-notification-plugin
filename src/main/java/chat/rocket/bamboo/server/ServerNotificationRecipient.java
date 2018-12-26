@@ -1,4 +1,4 @@
-package de.tum.in.www1.bamboo.server;
+package chat.rocket.bamboo.server;
 
 import com.atlassian.bamboo.deployments.results.DeploymentResult;
 import com.atlassian.bamboo.notification.NotificationRecipient;
@@ -25,7 +25,7 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
                                                                                            NotificationRecipient.RequiresResultSummary
 
 {
-    private static String WEBHOOK_URL = "webhookUrl";
+    private static String WEBHOOK_URL = "chat.rocket.bamboo.server.webhookUrl";
 
     private String webhookUrl = null;
 
@@ -39,12 +39,11 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
     @Override
     public void populate(@NotNull Map<String, String[]> params)
     {
-        for (String next : params.keySet())
-        {
+        for (String next : params.keySet()) {
             System.out.println("next = " + next);
         }
-        if (params.containsKey(WEBHOOK_URL))
-        {
+
+        if (params.containsKey(WEBHOOK_URL)) {
             int i = params.get(WEBHOOK_URL).length - 1;
             this.webhookUrl = params.get(WEBHOOK_URL)[i];
         }
@@ -53,9 +52,7 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
     @Override
     public void init(@Nullable String configurationData)
     {
-
-        if (StringUtils.isNotBlank(configurationData))
-        {
+        if (StringUtils.isNotBlank(configurationData)) {
             String delimiter = "\\|";
 
             String[] configValues = configurationData.split(delimiter);
@@ -70,13 +67,12 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
     @Override
     public String getRecipientConfig()
     {
-        // We can do this because webhook URLs don't have | in them, but it's pretty dodge. Better to JSONify or something?
-        String delimiter = "|";
-
         StringBuilder recipientConfig = new StringBuilder();
+
         if (StringUtils.isNotBlank(webhookUrl)) {
             recipientConfig.append(webhookUrl);
         }
+
         return recipientConfig.toString();
     }
 
@@ -92,9 +88,10 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
     {
         Map<String, Object> context = Maps.newHashMap();
 
-        if (webhookUrl != null)
-        {
-            context.put(WEBHOOK_URL, webhookUrl);
+        context.put("inputName", WEBHOOK_URL);
+
+        if (webhookUrl != null) {
+            context.put("webhookUrl", webhookUrl);
         }
 
         System.out.println("populateContext = " + context.toString());
@@ -146,5 +143,8 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
         this.templateRenderer = templateRenderer;
     }
 
-    public void setCustomVariableContext(CustomVariableContext customVariableContext) { this.customVariableContext = customVariableContext; }
+    public void setCustomVariableContext(CustomVariableContext customVariableContext)
+    {
+        this.customVariableContext = customVariableContext;
+    }
 }
