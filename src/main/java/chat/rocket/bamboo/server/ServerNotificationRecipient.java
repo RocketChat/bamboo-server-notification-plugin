@@ -124,13 +124,11 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
         return templateRenderer.render(editTemplateLocation, populateContext());
     }
 
-
-
     @NotNull
     public List<NotificationTransport> getTransports()
     {
         List<NotificationTransport> list = Lists.newArrayList();
-        list.add(new ServerNotificationTransport(webhookUrl, plan, resultsSummary, deploymentResult, customVariableContext));
+        list.add(new ServerNotificationTransport(webhookUrl, channel, plan, resultsSummary, deploymentResult, customVariableContext));
         return list;
     }
 
