@@ -14,8 +14,11 @@ import com.atlassian.bamboo.variable.CustomVariableContext;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.Map;
@@ -25,9 +28,13 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
                                                                                            NotificationRecipient.RequiresResultSummary
 
 {
+    private static final Logger log = Logger.getLogger(ServerNotificationRecipient.class);
+
     private static String WEBHOOK_URL = "chat.rocket.bamboo.server.webhookUrl";
+    private static String CHANNEL = "chat.rocket.bamboo.server.channel";
 
     private String webhookUrl = null;
+    private String channel = null;
 
     private TemplateRenderer templateRenderer;
 
@@ -39,13 +46,14 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
     @Override
     public void populate(@NotNull Map<String, String[]> params)
     {
-        for (String next : params.keySet()) {
-            System.out.println("next = " + next);
-        }
-
         if (params.containsKey(WEBHOOK_URL)) {
             int i = params.get(WEBHOOK_URL).length - 1;
             this.webhookUrl = params.get(WEBHOOK_URL)[i];
+        }
+
+        if (params.containsKey(CHANNEL)) {
+            int i = params.get(CHANNEL).length - 1;
+            this.channel = params.get(CHANNEL)[i];
         }
     }
 
@@ -53,12 +61,13 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
     public void init(@Nullable String configurationData)
     {
         if (StringUtils.isNotBlank(configurationData)) {
-            String delimiter = "\\|";
+            try {
+                JSONObject config = new JSONObject(configurationData);
 
-            String[] configValues = configurationData.split(delimiter);
-
-            if (configValues.length > 0) {
-                webhookUrl = configValues[0];
+                webhookUrl = config.getString(WEBHOOK_URL);
+                channel = config.getString(CHANNEL);
+            } catch (Exception e) {
+                log.error("Error initiating config: " + e.getMessage());
             }
         }
     }
@@ -67,13 +76,18 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
     @Override
     public String getRecipientConfig()
     {
-        StringBuilder recipientConfig = new StringBuilder();
+        JSONObject config = new JSONObject();
 
-        if (StringUtils.isNotBlank(webhookUrl)) {
-            recipientConfig.append(webhookUrl);
+        try {
+            config.put(WEBHOOK_URL, webhookUrl);
+            config.put(CHANNEL, channel);
+        } catch (JSONException e) {
+            log.error("Error getting recipient config: " + e.getMessage());
         }
 
-        return recipientConfig.toString();
+        System.out.println("METHOD getRecipientConfig: " + config.toString());
+
+        return config.toString();
     }
 
     @NotNull
@@ -88,13 +102,16 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
     {
         Map<String, Object> context = Maps.newHashMap();
 
-        context.put("inputName", WEBHOOK_URL);
+        context.put("webhookInputName", WEBHOOK_URL);
+        context.put("channelInputName", CHANNEL);
 
         if (webhookUrl != null) {
             context.put("webhookUrl", webhookUrl);
         }
 
-        System.out.println("populateContext = " + context.toString());
+        if (channel != null) {
+            context.put("channel", channel);
+        }
 
         return context;
     }

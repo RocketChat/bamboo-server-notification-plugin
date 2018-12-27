@@ -87,22 +87,17 @@ public class ServerNotificationTransport implements NotificationTransport
             HttpPost method = setupPostMethod();
             JSONObject jsonObject = createJSONObject(notification);
 
-            try {
-                method.setEntity(new StringEntity(jsonObject.toString()));
-            } catch (UnsupportedEncodingException e) {
-                log.error("Unsupported Encoding Exception :" + e.getMessage(), e);
-            }
+            method.setEntity(new StringEntity(jsonObject.toString()));
 
-            try {
-                log.debug(method.getURI().toString());
-                log.debug(method.getEntity().toString());
-                client.execute(method);
-            } catch (IOException e) {
-                log.error("Error using Slack API: " + e.getMessage(), e);
-            }
-
+            log.debug(method.getURI().toString());
+            log.debug(method.getEntity().toString());
+            client.execute(method);
         } catch(URISyntaxException e) {
             log.error("Error parsing webhook url: " + e.getMessage(), e);
+        } catch (UnsupportedEncodingException e) {
+            log.error("Unsupported Encoding Exception :" + e.getMessage(), e);
+        } catch (IOException e) {
+            log.error("Error executing http request: " + e.getMessage(), e);
         }
     }
 
