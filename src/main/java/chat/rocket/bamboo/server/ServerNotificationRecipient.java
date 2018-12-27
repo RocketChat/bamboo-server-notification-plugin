@@ -85,8 +85,6 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
             log.error("Error getting recipient config: " + e.getMessage());
         }
 
-        System.out.println("METHOD getRecipientConfig: " + config.toString());
-
         return config.toString();
     }
 
