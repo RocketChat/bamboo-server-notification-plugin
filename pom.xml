@@ -7,20 +7,20 @@
         <version>24</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <groupId>de.tum.in.www1</groupId>
-    <artifactId>bamboo-server</artifactId>
+    <groupId>chat.rocket</groupId>
+    <artifactId>bamboo-rocket-chat</artifactId>
     <version>1.0.0</version>
     <organization>
-        <name>LS1 TUM</name>
-        <url>http://www1.in.tum.de/</url>
+        <name>Rocket.Chat</name>
+        <url>https://rocket.chat</url>
     </organization>
     <scm>
-        <connection>scm:git:https://github.com/ls1intum/bamboo-server-notification-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:ls1intum/bamboo-server-notification-plugin.git</developerConnection>
-        <url>https://github.com/ls1intum/bamboo-server-notification-plugin</url>
+        <connection>scm:git:https://github.com/RocketChat/bamboo-server-notification-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:RocketChat/bamboo-server-notification-plugin.git</developerConnection>
+        <url>https://github.com/RocketChat/bamboo-server-notification-plugin</url>
     </scm>
-    <name>Server Notifications for Bamboo</name>
-    <description>Notify a Server when a build was executed.</description>
+    <name>Rocket.Chat Notifications for Bamboo</name>
+    <description>Send Bamboo notifications to a Rocket.Chat instance</description>
     <packaging>atlassian-plugin</packaging>
     <properties>
         <bamboo.version>5.9.10</bamboo.version>

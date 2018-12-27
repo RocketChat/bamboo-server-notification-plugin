@@ -1,4 +1,4 @@
-package de.tum.in.www1.bamboo.server;
+package chat.rocket.bamboo.server;
 
 import com.atlassian.bamboo.chains.ChainResultsSummary;
 import com.atlassian.bamboo.commit.Commit;
@@ -62,41 +62,37 @@ public class ServerNotificationTransport implements NotificationTransport
         this.deploymentResult = deploymentResult;
 
         URI uri;
-        try
-        {
+
+        try {
             uri = new URI(webhookUrl);
-        }
-        catch (URISyntaxException e)
-        {
+        } catch (URISyntaxException e) {
             log.error("Unable to set up proxy settings, invalid URI encountered: " + e);
             return;
         }
 
         HttpUtils.EndpointSpec proxyForScheme = HttpUtils.getProxyForScheme(uri.getScheme());
-        if (proxyForScheme!=null)
-        {
+
+        if (proxyForScheme != null) {
             HttpHost proxy = new HttpHost(proxyForScheme.host, proxyForScheme.port);
             DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
             this.client = HttpClients.custom().setRoutePlanner(routePlanner).build();
-        }
-        else
-        {
+        } else {
             this.client = HttpClients.createDefault();
         }
     }
 
     public void sendNotification(@NotNull Notification notification)
     {
-        try
-        {
+        try {
             HttpPost method = setupPostMethod();
             JSONObject jsonObject = createJSONObject(notification);
+
             try {
                 method.setEntity(new StringEntity(jsonObject.toString()));
-
             } catch (UnsupportedEncodingException e) {
                 log.error("Unsupported Encoding Exception :" + e.getMessage(), e);
             }
+
             try {
                 log.debug(method.getURI().toString());
                 log.debug(method.getEntity().toString());
@@ -104,9 +100,8 @@ public class ServerNotificationTransport implements NotificationTransport
             } catch (IOException e) {
                 log.error("Error using Slack API: " + e.getMessage(), e);
             }
-        }
-        catch(URISyntaxException e)
-        {
+
+        } catch(URISyntaxException e) {
             log.error("Error parsing webhook url: " + e.getMessage(), e);
         }
     }
@@ -118,8 +113,10 @@ public class ServerNotificationTransport implements NotificationTransport
         return post;
     }
 
-    private JSONObject createJSONObject(Notification notification) {
+    private JSONObject createJSONObject(Notification notification)
+    {
         JSONObject jsonObject = new JSONObject();
+
         try {
 
             jsonObject.put("notificationType", notification.getDescription());
@@ -156,7 +153,6 @@ public class ServerNotificationTransport implements NotificationTransport
 
                 buildDetails.put("testSummary", testResultOverview);
 
-
                 JSONArray vcsDetails = new JSONArray();
                 for (RepositoryChangeset changeset : resultsSummary.getRepositoryChangesets()) {
                     JSONObject changesetDetails = new JSONObject();
@@ -176,6 +172,7 @@ public class ServerNotificationTransport implements NotificationTransport
 
                     vcsDetails.put(changesetDetails);
                 }
+
                 buildDetails.put("vcs", vcsDetails);
 
                 if (resultsSummary instanceof ChainResultsSummary) {
@@ -214,9 +211,7 @@ public class ServerNotificationTransport implements NotificationTransport
                 }
 
                 jsonObject.put("build", buildDetails);
-
             }
-
 
         } catch (JSONException e) {
             log.error("JSON construction error :" + e.getMessage(), e);
