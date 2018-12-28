@@ -3,7 +3,11 @@ package chat.rocket.bamboo.server;
 import com.atlassian.bamboo.chains.ChainResultsSummary;
 import com.atlassian.bamboo.commit.Commit;
 import com.atlassian.bamboo.configuration.AdministrationConfiguration;
+import com.atlassian.bamboo.deployments.environments.Environment;
+import com.atlassian.bamboo.deployments.projects.DeploymentProject;
 import com.atlassian.bamboo.deployments.results.DeploymentResult;
+import com.atlassian.bamboo.deployments.versions.DeploymentVersion;
+import com.atlassian.bamboo.deployments.versions.DeploymentVersionStatus;
 import com.atlassian.bamboo.notification.Notification;
 import com.atlassian.bamboo.notification.NotificationTransport;
 import com.atlassian.bamboo.plan.cache.ImmutablePlan;
@@ -56,6 +60,8 @@ public class ServerNotificationTransport implements NotificationTransport
     private final ResultsSummary resultsSummary;
     @Nullable
     private final DeploymentResult deploymentResult;
+    @Nullable
+    private final DeploymentProject deploymentProject;
 
     public ServerNotificationTransport(
         String webhookUrl,
@@ -63,6 +69,7 @@ public class ServerNotificationTransport implements NotificationTransport
         @Nullable ImmutablePlan plan,
         @Nullable ResultsSummary resultsSummary,
         @Nullable DeploymentResult deploymentResult,
+        @Nullable DeploymentProject deploymentProject,
         CustomVariableContext customVariableContext)
     {
         this.webhookUrl = customVariableContext.substituteString(webhookUrl);
@@ -70,6 +77,7 @@ public class ServerNotificationTransport implements NotificationTransport
         this.plan = plan;
         this.resultsSummary = resultsSummary;
         this.deploymentResult = deploymentResult;
+        this.deploymentProject = deploymentProject;
         this.administrationConfiguration = getAdministrationConfiguration();
 
         URI uri;
@@ -135,6 +143,8 @@ public class ServerNotificationTransport implements NotificationTransport
             putProjectDataInPayload(payload);
 
             putResultsSummaryDataInPayload(payload);
+
+            putDeploymentResultDataInPayload(payload);
         } catch (JSONException e) {
             log.error("JSON construction error :" + e.getMessage(), e);
         }
@@ -187,7 +197,10 @@ public class ServerNotificationTransport implements NotificationTransport
     private void putProjectDataInPayload(JSONObject payload)
             throws JSONException
     {
-        if (plan == null) return;
+        if (plan == null) {
+            putDeploymentProjectDataInPayload(payload);
+            return;
+        }
 
         Project project = plan.getProject();
 
@@ -200,6 +213,75 @@ public class ServerNotificationTransport implements NotificationTransport
         payload.put("project", projectDetails);
     }
 
+    private void putDeploymentProjectDataInPayload(JSONObject payload)
+            throws JSONException
+    {
+        if (deploymentProject == null) return;
+
+        JSONObject projectDetails = new JSONObject();
+        projectDetails.put("key", deploymentProject.getKey().getKey());
+        projectDetails.put("name", deploymentProject.getName());
+        projectDetails.put("description", deploymentProject.getDescription());
+        projectDetails.put("url",
+            administrationConfiguration.getBaseUrl() +
+            "/deploy/viewDeploymentProjectEnvironments.action?id=" +
+            deploymentProject.getId()
+        );
+
+        payload.put("project", projectDetails);
+    }
+
+    private void putDeploymentResultDataInPayload(JSONObject payload) throws JSONException
+    {
+        if (deploymentResult == null) return;
+
+        JSONObject deploymentDetails = new JSONObject();
+        deploymentDetails.put("id", deploymentResult.getKey().getDeploymentResultId());
+        deploymentDetails.put("triggerName", deploymentResult.getTriggerReason().getName());
+        deploymentDetails.put("url",
+            administrationConfiguration.getBaseUrl() +
+            "/deploy/viewDeploymentResult.action?deploymentResultId=" +
+            deploymentResult.getKey().getDeploymentResultId()
+        );
+
+        Environment environment = deploymentResult.getEnvironment();
+
+        JSONObject environmentDetails = new JSONObject();
+        environmentDetails.put("id", environment.getId());
+        environmentDetails.put("name", environment.getName());
+        environmentDetails.put("url",
+            administrationConfiguration.getBaseUrl() +
+            "/deploy/viewEnvironment.action?id=" +
+            environment.getId()
+        );
+
+        deploymentDetails.put("environment", environmentDetails);
+
+        DeploymentVersion version = deploymentResult.getDeploymentVersion();
+
+        if (version != null) {
+            JSONObject versionDetails = new JSONObject();
+            versionDetails.put("id", version.getId());
+            versionDetails.put("name", version.getName());
+            versionDetails.put("creatorDisplayName", version.getCreatorDisplayName());
+            versionDetails.put("url",
+                administrationConfiguration.getBaseUrl() +
+                "/deploy/viewDeploymentVersion.action?versionId=" +
+                version.getId()
+            );
+
+            DeploymentVersionStatus versionStatus = version.getVersionStatus();
+
+            if (versionStatus != null) {
+                versionDetails.put("status", versionStatus.getDisplayName());
+            }
+
+            deploymentDetails.put("version", versionDetails);
+        }
+
+        payload.put("deploymentResult", deploymentDetails);
+    }
+
     private void putResultsSummaryDataInPayload(JSONObject payload) throws JSONException
     {
         if (resultsSummary == null) return;
@@ -207,7 +289,7 @@ public class ServerNotificationTransport implements NotificationTransport
         JSONObject buildDetails = new JSONObject();
         buildDetails.put("key", resultsSummary.getPlanResultKey());
         buildDetails.put("number", resultsSummary.getBuildNumber());
-        buildDetails.put("reason", resultsSummary.getShortReasonSummary());
+        buildDetails.put("reason", resultsSummary.getReasonSummary());
         buildDetails.put("successful", resultsSummary.isSuccessful());
         buildDetails.put("buildCompletedDate", ZonedDateTime.ofInstant(resultsSummary.getBuildCompletedDate().toInstant(), ZoneId.systemDefault()));
         buildDetails.put("artifact", !resultsSummary.getArtifactLinks().isEmpty());
