@@ -238,6 +238,7 @@ public class ServerNotificationTransport implements NotificationTransport
         JSONObject deploymentDetails = new JSONObject();
         deploymentDetails.put("id", deploymentResult.getKey().getDeploymentResultId());
         deploymentDetails.put("triggerName", deploymentResult.getTriggerReason().getName());
+        deploymentDetails.put("state", deploymentResult.getDeploymentState().toString());
         deploymentDetails.put("url",
             administrationConfiguration.getBaseUrl() +
             "/deploy/viewDeploymentResult.action?deploymentResultId=" +
