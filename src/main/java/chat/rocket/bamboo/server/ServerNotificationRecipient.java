@@ -5,6 +5,8 @@ import com.atlassian.bamboo.notification.NotificationRecipient;
 import com.atlassian.bamboo.notification.NotificationTransport;
 import com.atlassian.bamboo.notification.recipients.AbstractNotificationRecipient;
 import com.atlassian.bamboo.deployments.notification.DeploymentResultAwareNotificationRecipient;
+import com.atlassian.bamboo.deployments.projects.DeploymentProject;
+import com.atlassian.bamboo.deployments.projects.service.DeploymentProjectService;
 import com.atlassian.bamboo.plan.Plan;
 import com.atlassian.bamboo.plan.cache.ImmutablePlan;
 import com.atlassian.bamboo.plugin.descriptor.NotificationRecipientModuleDescriptor;
@@ -37,6 +39,7 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
     private String channel = null;
 
     private TemplateRenderer templateRenderer;
+    private DeploymentProjectService deploymentProjectService;
 
     private ImmutablePlan plan;
     private ResultsSummary resultsSummary;
@@ -85,8 +88,6 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
             log.error("Error getting recipient config: " + e.getMessage());
         }
 
-        System.out.println("METHOD getRecipientConfig: " + config.toString());
-
         return config.toString();
     }
 
@@ -124,14 +125,31 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
         return templateRenderer.render(editTemplateLocation, populateContext());
     }
 
-
-
     @NotNull
     public List<NotificationTransport> getTransports()
     {
         List<NotificationTransport> list = Lists.newArrayList();
-        list.add(new ServerNotificationTransport(webhookUrl, plan, resultsSummary, deploymentResult, customVariableContext));
+        list.add(getNewServerNotificationTransport());
         return list;
+    }
+
+    private NotificationTransport getNewServerNotificationTransport()
+    {
+        DeploymentProject deploymentProject = null;
+
+        if (deploymentResult != null) {
+            deploymentProject = deploymentProjectService.getDeploymentProject(deploymentResult.getEnvironment().getDeploymentProjectId());
+        }
+
+        return new ServerNotificationTransport(
+            webhookUrl,
+            channel,
+            plan,
+            resultsSummary,
+            deploymentResult,
+            deploymentProject,
+            customVariableContext
+        );
     }
 
     public void setPlan(@Nullable final Plan plan)
@@ -163,5 +181,11 @@ public class ServerNotificationRecipient extends AbstractNotificationRecipient i
     public void setCustomVariableContext(CustomVariableContext customVariableContext)
     {
         this.customVariableContext = customVariableContext;
+    }
+
+    // set*() methods are used to get dependencies injected
+    public void setDeploymentProjectService(DeploymentProjectService deploymentProjectService)
+    {
+        this.deploymentProjectService = deploymentProjectService;
     }
 }
